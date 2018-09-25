@@ -2609,6 +2609,11 @@ COMPAT_SYSCALL_DEFINE1(sysinfo, struct compat_sysinfo __user *, info)
 
 SYSCALL_DEFINE2(ptree, struct prinfo *, buf, int *, nr)
 {
-	printk(KERN_INFO "Hello World\n");
+	struct task_struct *task;
+
+	for (task = current; task != &init_task; task = task->parent)
+		;
+	
+	printk(KERN_INFO "now process is %d\n", task->pid);
 	return 0;
 }
