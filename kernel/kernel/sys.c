@@ -43,6 +43,7 @@
 #include <linux/ctype.h>
 #include <linux/mm.h>
 #include <linux/mempolicy.h>
+#include <linux/prinfo.h>
 
 #include <linux/compat.h>
 #include <linux/syscalls.h>
@@ -2605,3 +2606,9 @@ COMPAT_SYSCALL_DEFINE1(sysinfo, struct compat_sysinfo __user *, info)
 	return 0;
 }
 #endif /* CONFIG_COMPAT */
+
+SYSCALL_DEFINE2(ptree, struct prinfo *, buf, int *, nr)
+{
+	printk(KERN_INFO "Hello World\n");
+	return 0;
+}
