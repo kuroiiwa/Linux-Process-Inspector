@@ -2609,11 +2609,20 @@ COMPAT_SYSCALL_DEFINE1(sysinfo, struct compat_sysinfo __user *, info)
 
 SYSCALL_DEFINE2(ptree, struct prinfo *, buf, int *, nr)
 {
+	if (buf == NULL)
+		return -EINVAL;
+	if (nr == NULL)
+		return -EINVAL;
+	else if (*nr < 1)
+		return -EINVAL;
+	if (!access_ok(VERIFY_READ, nr, sizeof(*nr)))
+		return -EFAULT;
+	if (!access_ok(VERIFY_WRITE, buf, sizeof(struct prinfo) * (*nr)))
+		return -EFAULT;
 	struct task_struct *task;
 
 	for (task = current; task != &init_task; task = task->parent)
 		;
-	
-	printk(KERN_INFO "now process is %d\n", task->pid);
+	printk(KERN_INFO "Current process is %d\n", task->pid);
 	return 0;
 }
