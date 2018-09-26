@@ -43,7 +43,9 @@
 #include <linux/ctype.h>
 #include <linux/mm.h>
 #include <linux/mempolicy.h>
+/*new header*/
 #include <linux/prinfo.h>
+#include <linux/slab.h>
 
 #include <linux/compat.h>
 #include <linux/syscalls.h>
@@ -2607,22 +2609,41 @@ COMPAT_SYSCALL_DEFINE1(sysinfo, struct compat_sysinfo __user *, info)
 }
 #endif /* CONFIG_COMPAT */
 
-SYSCALL_DEFINE2(ptree, struct prinfo *, buf, int *, nr)
+SYSCALL_DEFINE2(ptree, struct prinfo __user *, buf, int __user *, nr)
 {
-	if (buf == NULL)
-		return -EINVAL;
-	if (nr == NULL)
-		return -EINVAL;
-	else if (*nr < 1)
-		return -EINVAL;
-	if (!access_ok(VERIFY_READ, nr, sizeof(*nr)))
-		return -EFAULT;
-	if (!access_ok(VERIFY_WRITE, buf, sizeof(struct prinfo) * (*nr)))
-		return -EFAULT;
 	struct task_struct *task;
-
+	int *numr;
+	
+	if (!buf || !nr)
+		return -EINVAL;
+	if (!access_ok(VERIFY_WRITE, nr, sizeof(int)))
+		return -EFAULT;
+	numr = kmalloc(sizeof(*numr), GFP_KERNEL);
+	if(!numr)
+		return -EFAULT;
+	if (copy_from_user(numr, nr, sizeof(int)))
+		return -EFAULT;
+	if ((*numr) < 1)
+		return -EINVAL;
+	if (!access_ok(VERIFY_WRITE, buf, sizeof(struct prinfo) * (*numr)))
+		return -EFAULT;
+	if (buf[(*numr)-1] == NULL)
+		return -EINVAL;
 	for (task = current; task != &init_task; task = task->parent)
 		;
-	printk(KERN_INFO "Current process is %d\n", task->pid);
+	int num_tab, num_p;
+	struct prinfo *task_DFS
+	
+	task_DFS = kmalloc(sizeof(struct prinfo) * (*numr));
+	num_tab = 0;
+	num_p = 0;
+	read_lock(&tasklist_lock);
+	while (1) {
+		
+	}
+	read_unlock(&tasklist_lock);
+//	task = container_of((task->children).next, struct task_struct, children);
+	printk(KERN_INFO "now process is %d\n", task->pid);
+	kfree(numr);
 	return 0;
 }

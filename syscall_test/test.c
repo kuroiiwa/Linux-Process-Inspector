@@ -2,8 +2,10 @@
 #include <unistd.h>
 #include <sys/syscall.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #define SYS_ptree 326
+#define BUF_SIZE 300
 
 struct prinfo {
 	pid_t parent_pid;		/* process id of parent */
@@ -20,6 +22,11 @@ int main(int argc, char **argv)
 	struct prinfo *buf;
 	int *nr;
 	
+	buf = (struct prinfo *)malloc(sizeof(struct prinfo) * BUF_SIZE);
+	nr = (int *)malloc(sizeof(int));
+	*nr = BUF_SIZE;
+	printf("run syscall:\n");
 	long res = syscall(SYS_ptree, buf, nr);
+	printf("return value:%li\n", res);
 	return res;
 }
