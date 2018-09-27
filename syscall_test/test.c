@@ -25,8 +25,8 @@ int main(int argc, char **argv)
 	buf = (struct prinfo *)malloc(sizeof(struct prinfo) * BUF_SIZE);
 	nr = (int *)malloc(sizeof(int));
 	*nr = BUF_SIZE;
-	printf("run syscall:\n");
 	long res = syscall(SYS_ptree, buf, nr);
-	printf("return value:%li\n", res);
+	for (int i = 0; i < *nr; i++)
+		printf("%s,%d,%ld,%d,%d,%d,%u\n", buf[i].comm, buf[i].pid, buf[i].state, buf[i].parent_pid, buf[i].first_child_pid, buf[i].next_sibling_pid, buf[i].uid);
 	return res;
 }

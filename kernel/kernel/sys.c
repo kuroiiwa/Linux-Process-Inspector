@@ -46,6 +46,10 @@
 /*new header*/
 #include <linux/prinfo.h>
 #include <linux/slab.h>
+#include <linux/rwlock.h>
+#include <linux/string.h>
+#include <linux/list.h>
+#include <linux/init_task.h>
 
 #include <linux/compat.h>
 #include <linux/syscalls.h>
@@ -2609,17 +2613,92 @@ COMPAT_SYSCALL_DEFINE1(sysinfo, struct compat_sysinfo __user *, info)
 }
 #endif /* CONFIG_COMPAT */
 
+static int copy_prinfo_k (struct task_struct *task, struct prinfo *task_k,
+			  int num_p, int num_tab)
+{
+	struct task_struct *tmp;
+	char tmp_c[64];
+
+	if (num_p == 0)
+		task_k[num_p].parent_pid = 0;
+	else
+		task_k[num_p].parent_pid = (task->parent)->pid;
+	if ((task->children).next == (task->children).prev)
+		task_k[num_p].first_child_pid = 0;
+	else {
+		tmp = list_first_entry(&task->children,
+					struct task_struct, sibling);
+		task_k[num_p].first_child_pid = tmp->pid;
+	}
+	if ((task->sibling).next == (task->sibling).prev)
+		task_k[num_p].next_sibling_pid = 0;
+	else {
+		tmp = container_of((task->sibling).next,
+				    struct task_struct, sibling);
+		task_k[num_p].next_sibling_pid = tmp->pid;
+	}
+	task_k[num_p].pid = task->pid;
+	task_k[num_p].state = task->state;
+	task_k[num_p].uid = (task->cred->uid).val;
+	memset(tmp_c, '\t', num_tab);
+	strncpy(tmp_c + num_tab, task->comm, 16);
+	tmp_c[num_tab + 16] = '\0';
+	strncpy(task_k[num_p].comm, tmp_c, 64);
+	printk(KERN_INFO "%s\n", task->comm);
+	return 0;
+}
+static int copy_prinfo_u (struct prinfo __user *buf, struct prinfo *task_k,
+			  int i)
+{
+	
+	if (copy_to_user(&(buf[i].parent_pid),
+	    &(task_k[i].parent_pid), sizeof(int))
+	    || copy_to_user(&(buf[i].pid),
+	    &(task_k[i].pid), sizeof(int))
+	    || copy_to_user(&(buf[i].first_child_pid),
+	    &(task_k[i].first_child_pid),sizeof(int))
+	    || copy_to_user(&(buf[i].next_sibling_pid),
+	    &(task_k[i].next_sibling_pid),sizeof(int))
+	    || copy_to_user(&(buf[i].state),
+	    &(task_k[i].state),sizeof(long))
+	    || copy_to_user(&(buf[i].uid),
+	    &(task_k[i].uid),sizeof(uid_t))
+	    || copy_to_user(&(buf[i].comm),
+	    &(task_k[i].comm),sizeof(char) * 64))
+		return -EFAULT;
+	return 0;
+}
+static int traverse_prc (struct task_struct *task, struct prinfo *task_k,
+			  int *num_p, int num_u, int num_tab)
+{
+	struct list_head *list;
+	struct task_struct *tmp;
+
+	if (*num_p < num_u)
+		copy_prinfo_k(task, task_k, *num_p, num_tab);
+	(*num_p)++;
+	if ((task->children).next != (task->children).prev) {
+		list_for_each(list, &task->children) {
+			tmp = list_entry(list, struct task_struct, sibling);
+			traverse_prc(tmp, task_k, num_p, num_u, num_tab+1);
+		}
+	}
+	return 0;
+	
+}
 SYSCALL_DEFINE2(ptree, struct prinfo __user *, buf, int __user *, nr)
 {
 	struct task_struct *task;
+	struct prinfo *task_k;
 	int *numr;
-	
+	int num_p, i;
+
 	if (!buf || !nr)
 		return -EINVAL;
 	if (!access_ok(VERIFY_WRITE, nr, sizeof(int)))
 		return -EFAULT;
 	numr = kmalloc(sizeof(*numr), GFP_KERNEL);
-	if(!numr)
+	if (!numr)
 		return -EFAULT;
 	if (copy_from_user(numr, nr, sizeof(int)))
 		return -EFAULT;
@@ -2627,23 +2706,23 @@ SYSCALL_DEFINE2(ptree, struct prinfo __user *, buf, int __user *, nr)
 		return -EINVAL;
 	if (!access_ok(VERIFY_WRITE, buf, sizeof(struct prinfo) * (*numr)))
 		return -EFAULT;
-	if (buf[(*numr)-1] == NULL)
+	if (buf+(*numr)-1 == NULL)
 		return -EINVAL;
 	for (task = current; task != &init_task; task = task->parent)
 		;
-	int num_tab, num_p;
-	struct prinfo *task_DFS
-	
-	task_DFS = kmalloc(sizeof(struct prinfo) * (*numr));
-	num_tab = 0;
+	task_k = kmalloc(sizeof(struct prinfo) * (*numr), GFP_KERNEL);
 	num_p = 0;
 	read_lock(&tasklist_lock);
-	while (1) {
-		
-	}
+	traverse_prc(task, task_k, &num_p, *numr, 0);
 	read_unlock(&tasklist_lock);
-//	task = container_of((task->children).next, struct task_struct, children);
-	printk(KERN_INFO "now process is %d\n", task->pid);
+	for (i = 0; i < *numr; i++) {
+		if (copy_prinfo_u(buf, task_k, i))
+			return -EFAULT;
+	}
+	printk(KERN_INFO "now num of process is %d\n", *numr);
+	if (copy_to_user(nr, &num_p, sizeof(int)))
+		return -EFAULT;
 	kfree(numr);
+	kfree(task_k);
 	return 0;
 }
