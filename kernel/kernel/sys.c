@@ -2612,7 +2612,9 @@ COMPAT_SYSCALL_DEFINE1(sysinfo, struct compat_sysinfo __user *, info)
 	return 0;
 }
 #endif /* CONFIG_COMPAT */
-
+/*
+ *copy data within kernel
+ */
 static int copy_prinfo_k (struct task_struct *task, struct prinfo *task_k,
 			  int num_p, int num_tab)
 {
@@ -2647,10 +2649,13 @@ static int copy_prinfo_k (struct task_struct *task, struct prinfo *task_k,
 	printk(KERN_INFO "%s\n", task->comm);
 	return 0;
 }
+/*
+ *copy data from kernel to user
+ */
 static int copy_prinfo_u (struct prinfo __user *buf, struct prinfo *task_k,
 			  int i)
 {
-	
+
 	if (copy_to_user(&(buf[i].parent_pid),
 	    &(task_k[i].parent_pid), sizeof(int))
 	    || copy_to_user(&(buf[i].pid),
@@ -2668,6 +2673,9 @@ static int copy_prinfo_u (struct prinfo __user *buf, struct prinfo *task_k,
 		return -EFAULT;
 	return 0;
 }
+/*
+ *traverse the list_task in DFS
+ */
 static int traverse_prc (struct task_struct *task, struct prinfo *task_k,
 			  int *num_p, int num_u, int num_tab)
 {
@@ -2684,8 +2692,11 @@ static int traverse_prc (struct task_struct *task, struct prinfo *task_k,
 		}
 	}
 	return 0;
-	
+
 }
+/*
+ *ptree syscall definition
+ */
 SYSCALL_DEFINE2(ptree, struct prinfo __user *, buf, int __user *, nr)
 {
 	struct task_struct *task;
@@ -2693,6 +2704,7 @@ SYSCALL_DEFINE2(ptree, struct prinfo __user *, buf, int __user *, nr)
 	int *numr;
 	int num_p, i;
 
+/*user arguments validation*/
 	if (!buf || !nr)
 		return -EINVAL;
 	if (!access_ok(VERIFY_WRITE, nr, sizeof(int)))
@@ -2706,6 +2718,7 @@ SYSCALL_DEFINE2(ptree, struct prinfo __user *, buf, int __user *, nr)
 		return -EINVAL;
 	if (!access_ok(VERIFY_WRITE, buf, sizeof(struct prinfo) * (*numr)))
 		return -EFAULT;
+/*only continue if nr is smaller than the number of actual entries*/
 	if (buf+(*numr)-1 == NULL)
 		return -EINVAL;
 	for (task = current; task != &init_task; task = task->parent)
@@ -2719,7 +2732,7 @@ SYSCALL_DEFINE2(ptree, struct prinfo __user *, buf, int __user *, nr)
 		if (copy_prinfo_u(buf, task_k, i))
 			return -EFAULT;
 	}
-	printk(KERN_INFO "now num of process is %d\n", *numr);
+/*actual process number*/
 	if (copy_to_user(nr, &num_p, sizeof(int)))
 		return -EFAULT;
 	kfree(numr);
