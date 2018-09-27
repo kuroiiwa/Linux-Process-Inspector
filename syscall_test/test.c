@@ -27,6 +27,7 @@ int main(int argc, char **argv)
 	*nr = BUF_SIZE;
 	long res = syscall(SYS_ptree, buf, nr);
 	for (int i = 0; i < *nr; i++)
-		printf("%s,%d,%ld,%d,%d,%d,%u\n", buf[i].comm, buf[i].pid, buf[i].state, buf[i].parent_pid, buf[i].first_child_pid, buf[i].next_sibling_pid, buf[i].uid);
+		printf("%s,%d,%ld,%d,%d,%d,%u\n", buf[i].comm, buf[i].pid, buf[i].state, buf[i].parent_pid,
+               buf[i].first_child_pid, buf[i].next_sibling_pid, buf[i].uid);
 	return res;
 }
