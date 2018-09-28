@@ -2660,15 +2660,15 @@ static int copy_prinfo_u (struct prinfo __user *buf, struct prinfo *task_k,
 	    || copy_to_user(&(buf[i].pid),
 	    &(task_k[i].pid), sizeof(int))
 	    || copy_to_user(&(buf[i].first_child_pid),
-	    &(task_k[i].first_child_pid),sizeof(int))
+	    &(task_k[i].first_child_pid), sizeof(int))
 	    || copy_to_user(&(buf[i].next_sibling_pid),
-	    &(task_k[i].next_sibling_pid),sizeof(int))
+	    &(task_k[i].next_sibling_pid), sizeof(int))
 	    || copy_to_user(&(buf[i].state),
-	    &(task_k[i].state),sizeof(long))
+	    &(task_k[i].state), sizeof(long))
 	    || copy_to_user(&(buf[i].uid),
-	    &(task_k[i].uid),sizeof(uid_t))
+	    &(task_k[i].uid), sizeof(uid_t))
 	    || copy_to_user(&(buf[i].comm),
-	    &(task_k[i].comm),sizeof(char) * 64))
+	    &(task_k[i].comm), sizeof(char) * 64))
 		return -EFAULT;
 	return 0;
 }
@@ -2718,11 +2718,13 @@ SYSCALL_DEFINE2(ptree, struct prinfo __user *, buf, int __user *, nr)
 	if (!access_ok(VERIFY_WRITE, buf, sizeof(struct prinfo) * (*numr)))
 		return -EFAULT;
 /*only continue if nr is smaller than the number of actual entries*/
-	if (buf+(*numr)-1 == NULL)
+	if (buf + (*numr) - 1 == NULL)
 		return -EINVAL;
 	for (task = current; task != &init_task; task = task->parent)
 		;
 	task_k = kmalloc(sizeof(struct prinfo) * (*numr), GFP_KERNEL);
+	if (!task_k)
+		return -EFAULT;
 	num_p = 0;
 	read_lock(&tasklist_lock);
 	traverse_prc(task, task_k, &num_p, *numr, 0);
