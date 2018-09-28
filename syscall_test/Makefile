@@ -9,7 +9,7 @@ CC := $(NDK_PATH)/clang
 # ---------- Write the rest of Makefile below ----------
 
 test: test.o
-	$(CC) -Wall -lm -o test test.c
+	$(CC) -Wall -o test test.c
 
 test.o: test.c
-	$(CC) -Wall -lm -c test.c
+	$(CC) -Wall -c test.c

@@ -2619,7 +2619,7 @@ static int copy_prinfo_k (struct task_struct *task, struct prinfo *task_k,
 			  int num_p, int num_tab)
 {
 	struct task_struct *tmp;
-	char tmp_c[64];
+	char tmp_c[64], comm[16];
 
 	if (num_p == 0)
 		task_k[num_p].parent_pid = 0;
@@ -2643,10 +2643,9 @@ static int copy_prinfo_k (struct task_struct *task, struct prinfo *task_k,
 	task_k[num_p].state = task->state;
 	task_k[num_p].uid = (task->cred->uid).val;
 	memset(tmp_c, '\t', num_tab);
-	strncpy(tmp_c + num_tab, task->comm, 16);
+	strncpy(tmp_c + num_tab, get_task_comm(comm, task), 16);
 	tmp_c[num_tab + 16] = '\0';
 	strncpy(task_k[num_p].comm, tmp_c, 64);
-	printk(KERN_INFO "%s\n", task->comm);
 	return 0;
 }
 /*
