@@ -2615,7 +2615,7 @@ COMPAT_SYSCALL_DEFINE1(sysinfo, struct compat_sysinfo __user *, info)
 /*
  *copy data within kernel
  */
-static int copy_prinfo_k (struct task_struct *task, struct prinfo *task_k,
+static int copy_prinfo_k(struct task_struct *task, struct prinfo *task_k,
 			  int num_p, int num_tab)
 {
 	struct task_struct *tmp;
@@ -2651,7 +2651,7 @@ static int copy_prinfo_k (struct task_struct *task, struct prinfo *task_k,
 /*
  *copy data from kernel to user
  */
-static int copy_prinfo_u (struct prinfo __user *buf, struct prinfo *task_k,
+static int copy_prinfo_u(struct prinfo __user *buf, struct prinfo *task_k,
 			  int i)
 {
 
@@ -2675,7 +2675,7 @@ static int copy_prinfo_u (struct prinfo __user *buf, struct prinfo *task_k,
 /*
  *traverse the list_task in DFS
  */
-static int traverse_prc (struct task_struct *task, struct prinfo *task_k,
+static int traverse_prc(struct task_struct *task, struct prinfo *task_k,
 			  int *num_p, int num_u, int num_tab)
 {
 	struct list_head *list;
