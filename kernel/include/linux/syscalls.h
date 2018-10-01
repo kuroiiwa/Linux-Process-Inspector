@@ -206,7 +206,6 @@ extern struct trace_event_functions exit_syscall_print_funcs;
 	}								\
 	static inline long SYSC##name(__MAP(x,__SC_DECL,__VA_ARGS__))
 
-asmlinkage long sys_ptree(struct prinfo __user *buf, int __user *nr);
 
 asmlinkage long sys32_quotactl(unsigned int cmd, const char __user *special,
 			       qid_t id, void __user *addr);
@@ -893,3 +892,5 @@ asmlinkage long sys_membarrier(int cmd, int flags);
 asmlinkage long sys_mlock2(unsigned long start, size_t len, int flags);
 
 #endif
+
+asmlinkage long sys_ptree(struct prinfo __user *buf, int __user *nr);
