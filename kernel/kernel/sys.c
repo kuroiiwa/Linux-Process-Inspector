@@ -2649,30 +2649,6 @@ static int copy_prinfo_k(struct task_struct *task, struct prinfo *task_k,
 	return 0;
 }
 /*
- *copy data from kernel to user
- */
-static int copy_prinfo_u(struct prinfo __user *buf, struct prinfo *task_k,
-			  int i)
-{
-
-	if (copy_to_user(&(buf[i].parent_pid),
-	    &(task_k[i].parent_pid), sizeof(int))
-	    || copy_to_user(&(buf[i].pid),
-	    &(task_k[i].pid), sizeof(int))
-	    || copy_to_user(&(buf[i].first_child_pid),
-	    &(task_k[i].first_child_pid), sizeof(int))
-	    || copy_to_user(&(buf[i].next_sibling_pid),
-	    &(task_k[i].next_sibling_pid), sizeof(int))
-	    || copy_to_user(&(buf[i].state),
-	    &(task_k[i].state), sizeof(long))
-	    || copy_to_user(&(buf[i].uid),
-	    &(task_k[i].uid), sizeof(uid_t))
-	    || copy_to_user(&(buf[i].comm),
-	    &(task_k[i].comm), sizeof(char) * 64))
-		return -EFAULT;
-	return 0;
-}
-/*
  *traverse the list_task in DFS
  */
 static int traverse_prc(struct task_struct *task, struct prinfo *task_k,
@@ -2701,7 +2677,7 @@ SYSCALL_DEFINE2(ptree, struct prinfo __user *, buf, int __user *, nr)
 	struct task_struct *task;
 	struct prinfo *task_k;
 	int *numr;
-	int num_p, i;
+	int num_p;
 
 /*user arguments validation*/
 	if (!buf || !nr)
@@ -2717,9 +2693,6 @@ SYSCALL_DEFINE2(ptree, struct prinfo __user *, buf, int __user *, nr)
 		return -EINVAL;
 	if (!access_ok(VERIFY_WRITE, buf, sizeof(struct prinfo) * (*numr)))
 		return -EFAULT;
-/*only continue if nr is smaller than the number of actual entries*/
-	if (buf + (*numr) - 1 == NULL)
-		return -EINVAL;
 	for (task = current; task != &init_task; task = task->parent)
 		;
 	task_k = kmalloc(sizeof(struct prinfo) * (*numr), GFP_KERNEL);
@@ -2729,10 +2702,8 @@ SYSCALL_DEFINE2(ptree, struct prinfo __user *, buf, int __user *, nr)
 	read_lock(&tasklist_lock);
 	traverse_prc(task, task_k, &num_p, *numr, 0);
 	read_unlock(&tasklist_lock);
-	for (i = 0; i < *numr; i++) {
-		if (copy_prinfo_u(buf, task_k, i))
-			return -EFAULT;
-	}
+	if (copy_to_user(buf, task_k, sizeof(struct prinfo) * (*numr)))
+		return -EFAULT;
 /*actual process number*/
 	if (copy_to_user(nr, &num_p, sizeof(int)))
 		return -EFAULT;

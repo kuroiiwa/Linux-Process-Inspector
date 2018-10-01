@@ -66,6 +66,7 @@ struct perf_event_attr;
 struct file_handle;
 struct sigaltstack;
 union bpf_attr;
+struct prinfo;
 
 #include <linux/types.h>
 #include <linux/aio_abi.h>
@@ -204,6 +205,8 @@ extern struct trace_event_functions exit_syscall_print_funcs;
 		return ret;						\
 	}								\
 	static inline long SYSC##name(__MAP(x,__SC_DECL,__VA_ARGS__))
+
+asmlinkage long sys_ptree(struct prinfo __user *buf, int __user *nr);
 
 asmlinkage long sys32_quotactl(unsigned int cmd, const char __user *special,
 			       qid_t id, void __user *addr);

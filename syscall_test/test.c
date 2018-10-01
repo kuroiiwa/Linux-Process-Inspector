@@ -20,14 +20,18 @@ struct prinfo {
 int main(int argc, char **argv)
 {
 	struct prinfo *buf;
-	int *nr;
+	int nr;
 	
 	buf = (struct prinfo *)malloc(sizeof(struct prinfo) * BUF_SIZE);
-	nr = (int *)malloc(sizeof(int));
-	*nr = BUF_SIZE;
-	long res = syscall(SYS_ptree, buf, nr);
-	for (int i = 0; i < *nr; i++)
-		printf("%s,%d,%ld,%d,%d,%d,%u\n", buf[i].comm, buf[i].pid, buf[i].state, buf[i].parent_pid,
-               buf[i].first_child_pid, buf[i].next_sibling_pid, buf[i].uid);
+	nr = BUF_SIZE;
+	long res = syscall(SYS_ptree, buf, nr); 
+/*	if (res != 0) {
+		printf("failed!\n");
+		return 1;
+	}*/
+	printf("%d processes in total.\n", nr);
+	if (nr > BUF_SIZE) nr = BUF_SIZE;
+	for (int i = 0; i < nr; i++)
+		printf("%s,%d,%ld,%d,%d,%d,%u\n", buf[i].comm, buf[i].pid, buf[i].state, buf[i].parent_pid, buf[i].first_child_pid, buf[i].next_sibling_pid, buf[i].uid);
 	return res;
 }
