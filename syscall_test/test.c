@@ -24,7 +24,7 @@ int main(int argc, char **argv)
 	
 	buf = (struct prinfo *)malloc(sizeof(struct prinfo) * BUF_SIZE);
 	nr = BUF_SIZE;
-	long res = syscall(SYS_ptree, buf, nr); 
+	long res = syscall(SYS_ptree, buf, &nr); 
 /*	if (res != 0) {
 		printf("failed!\n");
 		return 1;
