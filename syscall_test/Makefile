@@ -1,5 +1,8 @@
 # DO NOT TOUCH THIS
-CC := $(NDK_PATH)/clang
+CC := gcc
+
+CFLAGS = -g -Wall
+LDFLAGS = -g
 
 # NOTE:
 #   Use $(CC) instead of compiler name (e.g. gcc, clang).
@@ -9,7 +12,14 @@ CC := $(NDK_PATH)/clang
 # ---------- Write the rest of Makefile below ----------
 
 test: test.o
-	$(CC) -Wall -o test test.c
+	$(CC) $(LDFLAGS) -o test test.c
 
 test.o: test.c
-	$(CC) -Wall -c test.c
+	$(CC) $(CFLAGS) -c test.c
+
+.PHONY: clean
+clean:
+	rm -f *.o test
+
+.PHONY: all
+all: clean test
