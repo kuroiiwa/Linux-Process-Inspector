@@ -1,5 +1,5 @@
 # DO NOT TOUCH THIS
-CC := gcc
+CC := $(NDK_PATH)/clang
 
 CFLAGS = -g -Wall
 LDFLAGS = -g
