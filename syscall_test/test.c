@@ -11,35 +11,43 @@
 extern int errno;
 
 struct prinfo {
-  pid_t parent_pid;		/* process id of parent */
-  pid_t pid;			/* process id */
-  pid_t first_child_pid;  	/* pid of youngest child */
-  pid_t next_sibling_pid;  	/* pid of older sibling */
-  long state;			/* current state of process */
-  uid_t uid;			/* user id of process owner */
-  char comm[64];			/* name of program executed */
+	pid_t parent_pid;		/* process id of parent */
+        pid_t pid;			/* process id */
+	pid_t first_child_pid;  	/* pid of youngest child */
+	pid_t next_sibling_pid;  	/* pid of older sibling */
+	long state;			/* current state of process */
+	uid_t uid;			/* user id of process owner */
+	char comm[64];			/* name of program executed */
 };
 
 int main(int argc, char **argv)
 {
-  struct prinfo *buf;
-  int nr;
+	struct prinfo *buf;
+	struct prinfo p;
+	int nr;
+	int a[10000];
 
-  buf = (struct prinfo *)malloc(sizeof(struct prinfo) * BUF_SIZE);
-  nr = BUF_SIZE;
-  long res = syscall(SYS_ptree, buf, &nr); 
+	buf = (struct prinfo *)malloc(sizeof(struct prinfo) * BUF_SIZE);
+	nr = BUF_SIZE;
+	long res = syscall(SYS_ptree, buf, &nr); 
+	pid_t q;
 
-  if (res != 0) {
-    printf("Syscall failed with errno: %d\n", errno);
-    return 1;
-  }
-
-  /* printf("%d processes in total.\n", nr); */
-
-  if (nr > BUF_SIZE) nr = BUF_SIZE;
-  for (int i = 0; i < nr; i++)
-    printf("%s,%d,%ld,%d,%d,%d,%u\n", buf[i].comm, buf[i].pid, buf[i].state, buf[i].parent_pid, buf[i].first_child_pid, buf[i].next_sibling_pid, buf[i].uid);
-
-  free(buf);
-  return res;
+	if (nr > BUF_SIZE) nr = BUF_SIZE;
+	for (int i = 0; i < nr; i++){
+		p = buf[i];		
+		a[p.pid] = p.parent_pid;		
+	}
+	for (int i = 0; i < nr; i++){
+		p = buf[i];
+		q = p.parent_pid;
+		while(q != 0) {
+			q = a[q];
+			printf("        ");
+		}
+		if(p.pid != 0)	printf("        ");
+		printf("%s,%d,%ld,%d,%d,%d,%u\n", p.comm, p.pid, p.state, p.parent_pid, p.first_child_pid, p.next_sibling_pid, p.uid);
+	}
+	printf("%ld", res);
+	free(buf);
+	return res;
 }
