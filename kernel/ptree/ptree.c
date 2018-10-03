@@ -15,17 +15,17 @@ static int copy_prinfo_k(struct task_struct *task, struct prinfo *task_k,
 		task_k[num_p].parent_pid = 0;
 	else
 		task_k[num_p].parent_pid = (task->parent)->pid;
-	if ((task->children).next == (task->children).prev)
+	if (list_empty(&task->children))
 		task_k[num_p].first_child_pid = 0;
 	else {
 		tmp = list_last_entry(&task->children,
 					struct task_struct, sibling);
 		task_k[num_p].first_child_pid = tmp->pid;
 	}
-	if ((task->sibling).next == (task->sibling).prev)
+	if (list_empty(&task->sibling) || task->sibling.prev == &(task->parent->children))
 		task_k[num_p].next_sibling_pid = 0;
 	else {
-		tmp = container_of((task->sibling).next,
+		tmp = list_last_entry(&task->sibling,
 				    struct task_struct, sibling);
 		task_k[num_p].next_sibling_pid = tmp->pid;
 	}
