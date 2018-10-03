@@ -61,7 +61,6 @@ static int traverse_prc(struct task_struct *task, struct prinfo *task_k,
  */
 SYSCALL_DEFINE2(ptree, struct prinfo __user *, buf, int __user *, nr)
 {
-	struct task_struct *task;
 	struct prinfo *task_k;
 	int *numr;
 	int num_p;
@@ -80,14 +79,12 @@ SYSCALL_DEFINE2(ptree, struct prinfo __user *, buf, int __user *, nr)
 		return -EINVAL;
 	if (!access_ok(VERIFY_WRITE, buf, sizeof(struct prinfo) * (*numr)))
 		return -EFAULT;
-	for (task = current; task != &init_task; task = task->parent)
-		;
 	task_k = kmalloc(sizeof(struct prinfo) * (*numr), GFP_KERNEL);
 	if (!task_k)
 		return -EFAULT;
 	num_p = 0;
 	read_lock(&tasklist_lock);
-	traverse_prc(task, task_k, &num_p, *numr, 0);
+	traverse_prc(&init_task, task_k, &num_p, *numr, 0);
 	read_unlock(&tasklist_lock);
 	if (copy_to_user(buf, task_k, sizeof(struct prinfo) * (*numr)))
 		return -EFAULT;
